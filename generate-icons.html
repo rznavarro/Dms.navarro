@@ -4,36 +4,68 @@
 <meta charset="UTF-8">
 <title>Icon Generator — DM Sequencer</title>
 <style>
-  body { background: #111; color: #fff; font-family: monospace; padding: 24px; }
-  canvas { display: none; }
-  .btn { background: #ff3b3b; border: none; color: #fff; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 8px; }
-  .status { margin-top: 16px; color: #00ff88; font-size: 13px; }
-  h2 { color: #ff3b3b; margin-bottom: 16px; }
+  body { background: #111; color: #fff; font-family: monospace; padding: 24px; max-width: 480px; margin: 0 auto; }
+  h2 { color: #ff3b3b; margin-bottom: 8px; }
   p { color: #888; margin-bottom: 24px; font-size: 13px; line-height: 1.6; }
+  .icon-row { display: flex; align-items: center; gap: 16px; background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  canvas { border-radius: 10px; flex-shrink: 0; }
+  .icon-info { flex: 1; }
+  .icon-name { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 2px; }
+  .icon-desc { font-size: 11px; color: #666; }
+  .btn-dl { background: #ff3b3b; border: none; color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+  .btn-dl.done { background: #00aa55; }
 </style>
 </head>
 <body>
-<h2>Generador de Íconos PWA — DM Sequencer</h2>
-<p>
-  Haz clic en "Generar Íconos" para descargar los 4 archivos PNG.<br>
-  Luego ponlos en la carpeta <strong>icons/</strong> dentro del proyecto.
-</p>
-<button class="btn" onclick="generateAll()">⬇ Generar y Descargar Íconos</button>
-<div class="status" id="status"></div>
-<canvas id="c"></canvas>
+<h2>Íconos PWA — DM Sequencer</h2>
+<p>Descarga los 4 íconos y ponlos en la carpeta <strong>icons/</strong> del proyecto.</p>
+
+<div class="icon-row">
+  <canvas id="c1" width="60" height="60"></canvas>
+  <div class="icon-info">
+    <div class="icon-name">icon-192.png</div>
+    <div class="icon-desc">192×192 — Android / Chrome</div>
+  </div>
+  <button class="btn-dl" onclick="dl('c1',192,false,'icon-192.png',this)">⬇ Descargar</button>
+</div>
+
+<div class="icon-row">
+  <canvas id="c2" width="60" height="60"></canvas>
+  <div class="icon-info">
+    <div class="icon-name">icon-512.png</div>
+    <div class="icon-desc">512×512 — Splash screen</div>
+  </div>
+  <button class="btn-dl" onclick="dl('c2',512,false,'icon-512.png',this)">⬇ Descargar</button>
+</div>
+
+<div class="icon-row">
+  <canvas id="c3" width="60" height="60"></canvas>
+  <div class="icon-info">
+    <div class="icon-name">icon-maskable-192.png</div>
+    <div class="icon-desc">192×192 — Android adaptable</div>
+  </div>
+  <button class="btn-dl" onclick="dl('c3',192,true,'icon-maskable-192.png',this)">⬇ Descargar</button>
+</div>
+
+<div class="icon-row">
+  <canvas id="c4" width="60" height="60"></canvas>
+  <div class="icon-info">
+    <div class="icon-name">icon-maskable-512.png</div>
+    <div class="icon-desc">512×512 — Android adaptable</div>
+  </div>
+  <button class="btn-dl" onclick="dl('c4',512,true,'icon-maskable-512.png',this)">⬇ Descargar</button>
+</div>
 
 <script>
-function drawIcon(size, maskable) {
-  const canvas = document.getElementById('c');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const pad = maskable ? size * 0.15 : 0;
+function drawIcon(canvasId, size, maskable) {
+  const display = document.getElementById(canvasId);
+  const offscreen = document.createElement('canvas');
+  offscreen.width = size;
+  offscreen.height = size;
+  const ctx = offscreen.getContext('2d');
 
-  // Background
   ctx.fillStyle = '#0a0a0a';
   if (!maskable) {
-    // Rounded rect
     const r = size * 0.18;
     ctx.beginPath();
     ctx.moveTo(r, 0); ctx.lineTo(size - r, 0);
@@ -48,69 +80,56 @@ function drawIcon(size, maskable) {
     ctx.fillRect(0, 0, size, size);
   }
 
-  // Red accent circle
-  const grd = ctx.createRadialGradient(size * 0.5, size * 0.45, size * 0.05, size * 0.5, size * 0.45, size * 0.38);
-  grd.addColorStop(0, 'rgba(255,59,59,0.22)');
-  grd.addColorStop(1, 'rgba(255,59,59,0)');
+  const grd = ctx.createRadialGradient(size*0.5,size*0.42,size*0.05,size*0.5,size*0.42,size*0.40);
+  grd.addColorStop(0,'rgba(255,59,59,0.25)');
+  grd.addColorStop(1,'rgba(255,59,59,0)');
   ctx.fillStyle = grd;
   ctx.beginPath();
-  ctx.arc(size * 0.5, size * 0.45, size * 0.38, 0, Math.PI * 2);
+  ctx.arc(size*0.5,size*0.42,size*0.40,0,Math.PI*2);
   ctx.fill();
 
-  // "DM" text
-  const dmSize = size * 0.38;
-  ctx.font = `900 ${dmSize}px Arial Black, Arial`;
+  ctx.font = `900 ${size*0.36}px Arial Black, Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const tg = ctx.createLinearGradient(size*0.2,0,size*0.8,0);
+  tg.addColorStop(0,'#ffffff');
+  tg.addColorStop(1,'#ff3b3b');
+  ctx.fillStyle = tg;
+  ctx.fillText('DM', size*0.5, size*0.42);
 
-  // Gradient fill for text
-  const textGrad = ctx.createLinearGradient(size * 0.2, 0, size * 0.8, 0);
-  textGrad.addColorStop(0, '#ffffff');
-  textGrad.addColorStop(1, '#ff3b3b');
-  ctx.fillStyle = textGrad;
-  ctx.fillText('DM', size * 0.5, size * 0.44);
-
-  // "SEQ" subtext
-  const seqSize = size * 0.11;
-  ctx.font = `700 ${seqSize}px Arial`;
-  ctx.letterSpacing = `${size * 0.015}px`;
+  ctx.font = `700 ${size*0.10}px Arial`;
   ctx.fillStyle = '#ff3b3b';
-  ctx.fillText('SEQUENCER', size * 0.5, size * 0.72);
+  ctx.fillText('SEQUENCER', size*0.5, size*0.70);
 
-  // Bottom line accent
   ctx.fillStyle = '#ff3b3b';
-  ctx.fillRect(size * 0.32, size * 0.79, size * 0.36, size * 0.025);
+  ctx.fillRect(size*0.30, size*0.78, size*0.40, size*0.025);
 
-  return canvas.toDataURL('image/png');
+  // Draw preview
+  const dCtx = display.getContext('2d');
+  dCtx.drawImage(offscreen, 0, 0, 60, 60);
+
+  return offscreen.toDataURL('image/png');
 }
 
-function download(dataUrl, filename) {
+function dl(canvasId, size, maskable, filename, btn) {
+  const dataUrl = drawIcon(canvasId, size, maskable);
   const a = document.createElement('a');
   a.href = dataUrl;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
+  btn.textContent = '✓ Descargado';
+  btn.classList.add('done');
 }
 
-function generateAll() {
-  const status = document.getElementById('status');
-  status.textContent = 'Generando...';
-
-  setTimeout(() => { download(drawIcon(192, false), 'icon-192.png'); }, 100);
-  setTimeout(() => { download(drawIcon(512, false), 'icon-512.png'); }, 400);
-  setTimeout(() => { download(drawIcon(192, true),  'icon-maskable-192.png'); }, 700);
-  setTimeout(() => { download(drawIcon(512, true),  'icon-maskable-512.png'); }, 1000);
-
-  setTimeout(() => {
-    status.innerHTML = `
-      ✓ 4 archivos descargados:<br>
-      — icon-192.png<br>
-      — icon-512.png<br>
-      — icon-maskable-192.png<br>
-      — icon-maskable-512.png<br><br>
-      <span style="color:#ffcc00">Muévelos a la carpeta <strong>icons/</strong> del proyecto.</span>
-    `;
-  }, 1200);
-}
+// Draw previews on load
+window.onload = () => {
+  drawIcon('c1',192,false);
+  drawIcon('c2',512,false);
+  drawIcon('c3',192,true);
+  drawIcon('c4',512,true);
+};
 </script>
 </body>
 </html>
