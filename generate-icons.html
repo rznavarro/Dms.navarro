@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Icon Generator — DM Sequencer</title>
+<style>
+  body { background: #111; color: #fff; font-family: monospace; padding: 24px; }
+  canvas { display: none; }
+  .btn { background: #ff3b3b; border: none; color: #fff; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 8px; }
+  .status { margin-top: 16px; color: #00ff88; font-size: 13px; }
+  h2 { color: #ff3b3b; margin-bottom: 16px; }
+  p { color: #888; margin-bottom: 24px; font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h2>Generador de Íconos PWA — DM Sequencer</h2>
+<p>
+  Haz clic en "Generar Íconos" para descargar los 4 archivos PNG.<br>
+  Luego ponlos en la carpeta <strong>icons/</strong> dentro del proyecto.
+</p>
+<button class="btn" onclick="generateAll()">⬇ Generar y Descargar Íconos</button>
+<div class="status" id="status"></div>
+<canvas id="c"></canvas>
+
+<script>
+function drawIcon(size, maskable) {
+  const canvas = document.getElementById('c');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const pad = maskable ? size * 0.15 : 0;
+
+  // Background
+  ctx.fillStyle = '#0a0a0a';
+  if (!maskable) {
+    // Rounded rect
+    const r = size * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(size - r, 0);
+    ctx.quadraticCurveTo(size, 0, size, r);
+    ctx.lineTo(size, size - r);
+    ctx.quadraticCurveTo(size, size, size - r, size);
+    ctx.lineTo(r, size); ctx.quadraticCurveTo(0, size, 0, size - r);
+    ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.fillRect(0, 0, size, size);
+  }
+
+  // Red accent circle
+  const grd = ctx.createRadialGradient(size * 0.5, size * 0.45, size * 0.05, size * 0.5, size * 0.45, size * 0.38);
+  grd.addColorStop(0, 'rgba(255,59,59,0.22)');
+  grd.addColorStop(1, 'rgba(255,59,59,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(size * 0.5, size * 0.45, size * 0.38, 0, Math.PI * 2);
+  ctx.fill();
+
+  // "DM" text
+  const dmSize = size * 0.38;
+  ctx.font = `900 ${dmSize}px Arial Black, Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Gradient fill for text
+  const textGrad = ctx.createLinearGradient(size * 0.2, 0, size * 0.8, 0);
+  textGrad.addColorStop(0, '#ffffff');
+  textGrad.addColorStop(1, '#ff3b3b');
+  ctx.fillStyle = textGrad;
+  ctx.fillText('DM', size * 0.5, size * 0.44);
+
+  // "SEQ" subtext
+  const seqSize = size * 0.11;
+  ctx.font = `700 ${seqSize}px Arial`;
+  ctx.letterSpacing = `${size * 0.015}px`;
+  ctx.fillStyle = '#ff3b3b';
+  ctx.fillText('SEQUENCER', size * 0.5, size * 0.72);
+
+  // Bottom line accent
+  ctx.fillStyle = '#ff3b3b';
+  ctx.fillRect(size * 0.32, size * 0.79, size * 0.36, size * 0.025);
+
+  return canvas.toDataURL('image/png');
+}
+
+function download(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  a.click();
+}
+
+function generateAll() {
+  const status = document.getElementById('status');
+  status.textContent = 'Generando...';
+
+  setTimeout(() => { download(drawIcon(192, false), 'icon-192.png'); }, 100);
+  setTimeout(() => { download(drawIcon(512, false), 'icon-512.png'); }, 400);
+  setTimeout(() => { download(drawIcon(192, true),  'icon-maskable-192.png'); }, 700);
+  setTimeout(() => { download(drawIcon(512, true),  'icon-maskable-512.png'); }, 1000);
+
+  setTimeout(() => {
+    status.innerHTML = `
+      ✓ 4 archivos descargados:<br>
+      — icon-192.png<br>
+      — icon-512.png<br>
+      — icon-maskable-192.png<br>
+      — icon-maskable-512.png<br><br>
+      <span style="color:#ffcc00">Muévelos a la carpeta <strong>icons/</strong> del proyecto.</span>
+    `;
+  }, 1200);
+}
+</script>
+</body>
+</html>

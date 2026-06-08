@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DM Sequencer — Vortexia</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff3b3b">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS / Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DM Seq">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+
+<!-- Windows / Edge -->
+<meta name="msapplication-TileColor" content="#ff3b3b">
+<meta name="msapplication-TileImage" content="icons/icon-192.png">
+
+<!-- SEO / descripción -->
+<meta name="description" content="Secuenciador de DMs para Instagram con seguimiento automático — Vortexia">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #1e1e1e;
+    --accent: #ff3b3b;
+    --accent2: #ff7c3b;
+    --text: #f0f0f0;
+    --muted: #555;
+    --green: #00ff88;
+    --yellow: #ffcc00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ══ SCREEN 1: HOME ══ */
+  #screen-home {
+    padding: 40px 24px;
+    align-items: center;
+  }
+
+  .home-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    font-size: 11px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .home-title {
+    font-size: clamp(32px, 8vw, 52px);
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .home-sub {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Account grid */
+  .accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .account-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .account-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .account-btn:hover::before { opacity: 0.08; }
+  .account-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+  .account-btn.configured { border-color: #1e3a2a; }
+  .account-btn.configured .acc-status { color: var(--green); }
+
+  .acc-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .acc-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .acc-status {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .acc-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.3s;
+  }
+
+  /* ══ SCREEN 2: SETUP ══ */
+  #screen-setup {
+    padding: 0;
+  }
+
+  .setup-header {
+    padding: 24px 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .back-btn:hover { border-color: var(--accent); }
+
+  .setup-title-wrap { flex: 1; }
+  .setup-account-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .setup-account-name {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .url-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .url-counter span { color: var(--accent); }
+
+  .url-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .url-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .url-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    width: 20px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .url-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .url-input:focus { border-color: var(--accent); }
+  .url-input.filled { border-color: #1e3a2a; }
+  .url-input::placeholder { color: var(--muted); }
+
+  .setup-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-save {
+    flex: 1;
+    padding: 14px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .btn-save:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-save:not(:disabled):hover { opacity: 0.85; }
+
+  /* ══ SCREEN 3: SEQUENCE ══ */
+  #screen-sequence {
+    padding: 0;
+  }
+
+  .seq-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .seq-account-info { flex: 1; }
+  .seq-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .seq-name {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .seq-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-align: center;
+  }
+
+  .seq-badge-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .seq-badge-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* START STATE */
+  .seq-start-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 40px 24px;
+    text-align: center;
+  }
+
+  .seq-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+
+  .seq-start-title {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .seq-start-sub {
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 260px;
+    line-height: 1.6;
+  }
+
+  .btn-start-seq {
+    padding: 16px 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+    box-shadow: 0 0 30px rgba(255,59,59,0.3);
+  }
+
+  .btn-start-seq:hover { transform: scale(1.04); }
+
+  /* ACTIVE STATE */
+  .seq-active-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 32px 24px;
+  }
+
+  .dm-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .dm-progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .dm-progress-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .dm-progress-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .dm-progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .dm-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .dm-url-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .dm-url-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    word-break: break-all;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .dm-url-display:hover { border-color: var(--accent); }
+
+  .btn-open-dm {
+    width: 100%;
+    padding: 14px;
+    background: #1a1a2e;
+    border: 1px solid #4040ff;
+    border-radius: 10px;
+    color: #8080ff;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+  }
+
+  .btn-open-dm:hover { background: #20204a; }
+
+  .btn-listo {
+    width: 100%;
+    padding: 16px;
+    background: #0d2b1a;
+    border: 1px solid var(--green);
+    border-radius: 10px;
+    color: var(--green);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-listo:hover { background: #142e1f; }
+
+  /* TIMER STATE */
+  .timer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .timer-overlay.visible { display: flex; }
+
+  .timer-ring {
+    position: relative;
+    width: 180px;
+    height: 180px;
+  }
+
+  .timer-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .timer-ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 6;
+  }
+
+  .timer-ring-fill {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 502;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear;
+  }
+
+  .timer-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .timer-digits {
+    font-family: 'Space Mono', monospace;
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .timer-label {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .timer-message {
+    font-size: 15px;
+    color: var(--muted);
+    text-align: center;
+    max-width: 240px;
+    line-height: 1.6;
+  }
+
+  .timer-next-info {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-align: center;
+  }
+
+  /* DONE STATE */
+  .seq-done-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 24px;
+    text-align: center;
+  }
+
+  .done-icon {
+    font-size: 60px;
+    animation: pop 0.5s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .done-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--green);
+  }
+
+  .done-sub {
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 260px;
+    line-height: 1.6;
+  }
+
+  .done-stats {
+    display: flex;
+    gap: 16px;
+  }
+
+  .done-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    text-align: center;
+  }
+
+  .done-stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .done-stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .btn-back-home {
+    padding: 14px 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .btn-back-home:hover { border-color: var(--accent); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 200;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--accent); color: var(--accent); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN 1: HOME ══ -->
+<div id="screen-home" class="screen active">
+  <div class="home-header">
+    <div class="logo">Vortexia</div>
+    <div class="home-title">DM<br>Sequencer</div>
+    <div class="home-sub">10 cuentas · 15 DMs · 1 min</div>
+  </div>
+  <div class="accounts-grid" id="accounts-grid"></div>
+</div>
+
+<!-- ══ SCREEN 2: SETUP ══ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="setup-title-wrap">
+      <div class="setup-account-label">Configurar cuenta</div>
+      <div class="setup-account-name" id="setup-account-name">Cuenta 1</div>
+    </div>
+    <div class="url-counter"><span id="url-count">0</span>/15</div>
+  </div>
+  <div class="url-list" id="url-list"></div>
+  <div id="duplicate-warning-banner" style="display: none; background: rgba(255, 59, 59, 0.12); border-top: 1px solid var(--accent); border-bottom: 1px solid var(--accent); padding: 12px 24px; font-size: 11px; color: var(--accent); font-family: 'Space Mono', monospace; line-height: 1.5; text-align: center;">
+    ⚠️ <strong>¡ALERTA DE DUPLICADOS DETECTADA!</strong> Una o más URLs ya existen en el sistema. Revísalas para evitar duplicados.
+  </div>
+  <div class="setup-footer">
+    <button class="btn-save" id="btn-save" onclick="saveAccount()" disabled>Guardar</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN 3: SEQUENCE ══ -->
+<div id="screen-sequence" class="screen">
+  <div class="seq-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="seq-account-info">
+      <div class="seq-label">Secuencia activa</div>
+      <div class="seq-name" id="seq-account-name">Cuenta 1</div>
+    </div>
+    <div class="seq-badge">
+      <div class="seq-badge-num" id="seq-badge-num">0</div>
+      <div class="seq-badge-label">enviados</div>
+    </div>
+  </div>
+
+  <!-- START STATE -->
+  <div class="seq-start-state" id="seq-start-state">
+    <div class="seq-icon">📨</div>
+    <div class="seq-start-title">Lista para enviar</div>
+    <div class="seq-start-sub" id="seq-start-sub">15 DMs configurados y listos para ser enviados en secuencia.</div>
+    <button class="btn-start-seq" onclick="startSequence()">▶ Iniciar Secuencia</button>
+  </div>
+
+  <!-- ACTIVE STATE -->
+  <div class="seq-active-state" id="seq-active-state" style="display:none;">
+    <div class="dm-card">
+      <div class="dm-progress-row">
+        <div class="dm-progress-label">Progreso</div>
+        <div class="dm-progress-count" id="dm-progress-count">1 / 15</div>
+      </div>
+      <div class="dm-progress-bar">
+        <div class="dm-progress-fill" id="dm-progress-fill" style="width:0%"></div>
+      </div>
+      <div class="dm-url-label">URL del DM</div>
+      <div class="dm-url-display" id="dm-url-display" onclick="openCurrentDM()">—</div>
+      <button class="btn-open-dm" onclick="openCurrentDM()">🔗 Abrir DM en Instagram</button>
+      <button class="btn-listo" onclick="markDone()">✓ Listo — Mensaje Enviado</button>
+    </div>
+  </div>
+
+  <!-- DONE STATE -->
+  <div class="seq-done-state" id="seq-done-state" style="display:none;">
+    <div class="done-icon">🎯</div>
+    <div class="done-title">¡Secuencia Completa!</div>
+    <div class="done-sub" id="done-sub">Los 15 DMs fueron enviados correctamente.</div>
+    <div class="done-stats">
+      <div class="done-stat">
+        <div class="done-stat-num">15</div>
+        <div class="done-stat-label">DMs</div>
+      </div>
+      <div class="done-stat">
+        <div class="done-stat-num" id="done-time">~15m</div>
+        <div class="done-stat-label">Tiempo</div>
+      </div>
+    </div>
+    <button class="btn-back-home" onclick="goHome()">← Volver al inicio</button>
+  </div>
+</div>
+
+<!-- ══ TIMER OVERLAY ══ -->
+<div class="timer-overlay" id="timer-overlay">
+  <div class="timer-ring">
+    <svg width="180" height="180" viewBox="0 0 180 180">
+      <circle class="timer-ring-bg" cx="90" cy="90" r="80"/>
+      <circle class="timer-ring-fill" id="timer-ring-fill" cx="90" cy="90" r="80"/>
+    </svg>
+    <div class="timer-center">
+      <div class="timer-digits" id="timer-digits">1:00</div>
+      <div class="timer-label">esperando</div>
+    </div>
+  </div>
+  <div class="timer-message">Espera antes de enviar el siguiente DM para evitar detección.</div>
+  <div class="timer-next-info" id="timer-next-info">Siguiente: DM #2</div>
+</div>
+
+<!-- ══ SCREEN 4: FOLLOW-UPS ══ -->
+<div id="screen-followups" class="screen">
+  <div class="setup-header">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="setup-title-wrap">
+      <div class="setup-account-label">Panel Global</div>
+      <div class="setup-account-name">📋 Seguimientos HOY</div>
+    </div>
+    <div class="url-counter"><span id="followups-total-count">0</span> leads</div>
+  </div>
+
+  <div class="followups-container" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+    
+    <!-- SECTION 4 HOURS -->
+    <div class="followup-section">
+      <div class="followup-section-title" style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <span>⏰ EN 4 HORAS (MSG 1)</span>
+        <span class="followup-section-badge" id="badge-4h" style="font-family: 'Space Mono', monospace; font-size: 11px; background: rgba(255, 59, 59, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 1px 6px; border-radius: 4px;">0</span>
+      </div>
+      <div class="followup-list" id="list-4h" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Card items -->
+      </div>
+    </div>
+
+    <!-- SECTION DAY 2 -->
+    <div class="followup-section">
+      <div class="followup-section-title" style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--accent2); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <span>📅 HOY DÍA 2 (MSG 1)</span>
+        <span class="followup-section-badge" id="badge-d2" style="font-family: 'Space Mono', monospace; font-size: 11px; background: rgba(255, 124, 59, 0.1); border: 1px solid var(--accent2); color: var(--accent2); padding: 1px 6px; border-radius: 4px;">0</span>
+      </div>
+      <div class="followup-list" id="list-d2" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Card items -->
+      </div>
+    </div>
+
+    <!-- SECTION DAY 4 -->
+    <div class="followup-section">
+      <div class="followup-section-title" style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--yellow); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <span>📅 HOY DÍA 4 (MSG 2)</span>
+        <span class="followup-section-badge" id="badge-d4" style="font-family: 'Space Mono', monospace; font-size: 11px; background: rgba(255, 204, 0, 0.1); border: 1px solid var(--yellow); color: var(--yellow); padding: 1px 6px; border-radius: 4px;">0</span>
+      </div>
+      <div class="followup-list" id="list-d4" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Card items -->
+      </div>
+    </div>
+
+    <!-- SECTION DAY 7 -->
+    <div class="followup-section">
+      <div class="followup-section-title" style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--green); letter-spacing: 2px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <span>📅 HOY DÍA 7 (MSG 3)</span>
+        <span class="followup-section-badge" id="badge-d7" style="font-family: 'Space Mono', monospace; font-size: 11px; background: rgba(0, 255, 136, 0.1); border: 1px solid var(--green); color: var(--green); padding: 1px 6px; border-radius: 4px;">0</span>
+      </div>
+      <div class="followup-list" id="list-d7" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Card items -->
+      </div>
+    </div>
+
+    <!-- SIMULATOR PANEL -->
+    <div class="simulator-panel" style="margin-top: 16px; padding: 16px; background: var(--surface); border: 1px dashed var(--border); border-radius: 12px;">
+      <div class="sim-title" style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; font-weight: 700;">🛠 Herramientas de Simulación para Pruebas</div>
+      <div class="sim-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+        <button class="btn-sim" onclick="simulateLog(1, 4.5)" style="background: rgba(255,59,59,0.1); border: 1px solid rgba(255,59,59,0.3); color: var(--accent); padding: 8px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">+ MSG 1 hace 4h</button>
+        <button class="btn-sim" onclick="simulateLog(1, 50)" style="background: rgba(255,124,59,0.1); border: 1px solid rgba(255,124,59,0.3); color: var(--accent2); padding: 8px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">+ MSG 1 hace 2d (50h)</button>
+        <button class="btn-sim" onclick="simulateLog(2, 98)" style="background: rgba(255,204,0,0.1); border: 1px solid rgba(255,204,0,0.3); color: var(--yellow); padding: 8px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">+ MSG 2 hace 4d (98h)</button>
+        <button class="btn-sim" onclick="simulateLog(3, 170)" style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); color: var(--green); padding: 8px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">+ MSG 3 hace 7d (170h)</button>
+      </div>
+      <button onclick="clearLogsAndReset()" style="width: 100%; margin-top: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #888; padding: 8px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;">Limpiar Historial y Estado de Pruebas</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+const TOTAL_ACCOUNTS = 10;
+const TOTAL_URLS = 15;
+const TIMER_SECONDS = 60;
+
+const ACCOUNT_PROFILES = {
+  1: { username: 'vortexia.data', url: 'https://www.instagram.com/vortexia.data/' },
+  2: { username: 'vortexia.navarro', url: 'https://www.instagram.com/vortexia.navarro/' },
+  3: { username: 'vortexia.build', url: 'https://www.instagram.com/vortexia.build/' },
+  4: { username: 'vortexia.energy', url: 'https://www.instagram.com/vortexia.energy/' },
+  5: { username: 'vortexia.labs', url: 'https://www.instagram.com/vortexia.labs/' },
+  6: { username: 'vortexia.re', url: 'https://www.instagram.com/vortexia.re/' },
+  7: { username: 'vortexia.io', url: 'https://www.instagram.com/vortexia.io/' },
+  8: { username: 'vortexia.bi', url: 'https://www.instagram.com/vortexia.bi/' },
+  9: { username: 'vortexia.supreme', url: 'https://www.instagram.com/vortexia.supreme/' },
+  10: { username: 'vortexia.automate', url: 'https://www.instagram.com/vortexia.automate/' }
+};
+
+let accounts = {};
+let logs = [];
+let followUpsCompleted = {};
+let currentAccount = null;
+let currentIndex = 0;
+let timerInterval = null;
+let timerRemaining = 0;
+let seqStartTime = null;
+
+// Load from localStorage
+function loadData() {
+  try {
+    const saved = localStorage.getItem('dm_sequencer_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        if (parsed.accounts && (parsed.logs || parsed.followUpsCompleted)) {
+          accounts = parsed.accounts || {};
+          logs = parsed.logs || [];
+          followUpsCompleted = parsed.followUpsCompleted || {};
+          
+          // Migración de datos históricos:
+          // Las URLs enviadas desde la interfaz de secuencia siempre son MSG 1 (dmNum = 1).
+          // Anteriormente se guardaba como dmNum = currentIndex + 1 (de 1 a 15) por confusión,
+          // lo que causaba que casi ninguna URL apareciera como follow-up elegible.
+          logs.forEach(log => {
+            if (log.id && log.id.startsWith('log_')) {
+              // Cualquier log original de secuencia real lo ponemos como dmNum = 1 (MSG 1)
+              // para que reciba sus seguimientos correctos.
+              if (log.dmNum > 1 && !log.id.includes('followup_')) {
+                log.dmNum = 1;
+              }
+            }
+          });
+        } else {
+          accounts = parsed || {};
+          logs = [];
+          followUpsCompleted = {};
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+function saveData() {
+  localStorage.setItem('dm_sequencer_v2', JSON.stringify({
+    accounts,
+    logs,
+    followUpsCompleted
+  }));
+}
+
+function getPendingFollowupsCount() {
+  let count = 0;
+  const now = Date.now();
+  logs.forEach(log => {
+    const elapsedMs = now - log.timestamp;
+    const elapsedHours = elapsedMs / (1000 * 60 * 60);
+
+    if (log.dmNum === 1) {
+      if (elapsedHours >= 4 && elapsedHours < 48 && !followUpsCompleted[log.id + '_4h']) {
+        count++;
+      }
+      if (elapsedHours >= 48 && !followUpsCompleted[log.id + '_d2']) {
+        count++;
+      }
+    } else if (log.dmNum === 2) {
+      if (elapsedHours >= 96 && !followUpsCompleted[log.id + '_d4']) {
+        count++;
+      }
+    } else if (log.dmNum === 3) {
+      if (elapsedHours >= 168 && !followUpsCompleted[log.id + '_d7']) {
+        count++;
+      }
+    }
+  });
+  return count;
+}
+
+// ── HOME ──
+function renderHome() {
+  const grid = document.getElementById('accounts-grid');
+  grid.innerHTML = '';
+
+  for (let i = 1; i <= TOTAL_ACCOUNTS; i++) {
+    const acc = accounts[i];
+    const profile = ACCOUNT_PROFILES[i];
+    const configured = acc && acc.urls && acc.urls.filter(u => u.trim()).length === TOTAL_URLS;
+    const sent = acc ? (acc.sent || 0) : 0;
+    const progress = configured ? Math.round((sent / TOTAL_URLS) * 100) : 0;
+
+    const btn = document.createElement('div');
+    btn.className = 'account-btn' + (configured ? ' configured' : '');
+    btn.innerHTML = `
+      <div class="acc-num" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span>CUENTA ${String(i).padStart(2,'0')}</span>
+        <span style="color: var(--accent); font-size: 10px; font-weight: bold; font-family: 'Space Mono', monospace; text-decoration: underline; cursor: pointer;" onclick="event.stopPropagation(); window.open('${profile.url}', '_blank')">@${profile.username}</span>
+      </div>
+      <div class="acc-name">Cuenta ${i}</div>
+      <div class="acc-status">${configured ? `✓ ${sent}/${TOTAL_URLS} enviados` : '— Sin configurar'}</div>
+      ${configured ? `<div class="acc-progress" style="width:${progress}%"></div>` : ''}
+    `;
+    btn.onclick = () => openAccount(i);
+    grid.appendChild(btn);
+  }
+
+  // 11th Button: Seguimientos
+  const followUpBtn = document.createElement('div');
+  followUpBtn.className = 'account-btn';
+  followUpBtn.style.gridColumn = 'span 2';
+  followUpBtn.style.borderColor = 'var(--accent)';
+  followUpBtn.style.background = 'linear-gradient(135deg, rgba(255, 59, 59, 0.05) 0%, var(--surface) 100%)';
+  
+  const totalPending = getPendingFollowupsCount();
+  const badgeHtml = totalPending > 0 ? `<span id="followup-badge-total" style="font-family: 'Space Mono', monospace; font-size: 11px; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 999px; margin-left: auto;">${totalPending}</span>` : `<span id="followup-badge-total" style="font-family: 'Space Mono', monospace; font-size: 11px; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 999px; margin-left: auto; display: none;">0</span>`;
+
+  followUpBtn.innerHTML = `
+    <div class="acc-num" style="color: var(--accent); font-weight: 700;">📋 SEGUIMIENTO DIARIO</div>
+    <div class="acc-name" style="font-size: 16px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+      <span>📋 Seguimientos</span>
+      ${badgeHtml}
+    </div>
+    <div class="acc-status" style="color: #888;">Leads que necesitan seguimiento hoy</div>
+  `;
+  followUpBtn.onclick = () => openFollowUpsScreen();
+  grid.appendChild(followUpBtn);
+}
+
+function openAccount(num) {
+  const acc = accounts[num];
+  const configured = acc && acc.urls && acc.urls.filter(u => u.trim()).length === TOTAL_URLS;
+
+  currentAccount = num;
+
+  if (configured) {
+    openSequenceScreen(num);
+  } else {
+    openSetupScreen(num);
+  }
+}
+
+// ── SETUP ──
+function openSetupScreen(num) {
+  const profile = ACCOUNT_PROFILES[num];
+  document.getElementById('setup-account-name').innerHTML = `Cuenta ${num} <span style="color: var(--accent); font-size: 14px; font-family: 'Space Mono', monospace; font-weight: normal; margin-left:8px; cursor: pointer; text-decoration: underline;" onclick="window.open('${profile.url}', '_blank')">(@${profile.username})</span>`;
+  renderUrlList(num);
+  showScreen('screen-setup');
+}
+
+function renderUrlList(num) {
+  const list = document.getElementById('url-list');
+  list.innerHTML = '';
+  const acc = accounts[num] || { urls: Array(TOTAL_URLS).fill('') };
+
+  for (let i = 0; i < TOTAL_URLS; i++) {
+    const item = document.createElement('div');
+    item.className = 'url-item';
+    item.innerHTML = `
+      <div class="url-num">${i+1}</div>
+      <input
+        class="url-input ${acc.urls[i] ? 'filled' : ''}"
+        type="url"
+        placeholder="https://ig.me/m/username"
+        value="${acc.urls[i] || ''}"
+        data-index="${i}"
+        oninput="onUrlChange(this, ${num})"
+        onpaste="setTimeout(()=>onUrlChange(this, ${num}), 50)"
+      />
+    `;
+    list.appendChild(item);
+  }
+
+  updateUrlCounter(num);
+  scanCurrentInputsForDuplicates(num);
+}
+
+function findDuplicate(val, currentAccNum, currentIdx) {
+  if (!val || !val.trim()) return null;
+  const cleanVal = val.trim().toLowerCase();
+  for (let accKey in accounts) {
+    const accNum = parseInt(accKey);
+    const uArr = accounts[accNum].urls || [];
+    for (let uIdx = 0; uIdx < uArr.length; uIdx++) {
+      if (accNum === currentAccNum && uIdx === currentIdx) {
+        continue;
+      }
+      if (uArr[uIdx] && uArr[uIdx].trim().toLowerCase() === cleanVal) {
+        return { accountNum: accNum, index: uIdx + 1 };
+      }
+    }
+  }
+  return null;
+}
+
+function scanCurrentInputsForDuplicates(num) {
+  const inputs = document.querySelectorAll('#url-list .url-input');
+  inputs.forEach(input => {
+    const idx = parseInt(input.dataset.index);
+    const val = input.value.trim();
+    if (val) {
+      const duplicateInfo = findDuplicate(val, num, idx);
+      if (duplicateInfo) {
+        input.style.borderColor = 'var(--accent)';
+        input.style.boxShadow = '0 0 8px rgba(255, 59, 59, 0.4)';
+        const profile = ACCOUNT_PROFILES[duplicateInfo.accountNum];
+        const profileName = profile ? `@${profile.username}` : `Cuenta ${duplicateInfo.accountNum}`;
+        input.title = `Duplicado en ${profileName} (DM #${duplicateInfo.index})`;
+      } else {
+        input.style.borderColor = '';
+        input.style.boxShadow = '';
+        input.title = '';
+      }
+    } else {
+      input.style.borderColor = '';
+      input.style.boxShadow = '';
+      input.title = '';
+    }
+  });
+}
+
+function onUrlChange(input, num) {
+  const idx = parseInt(input.dataset.index);
+  const val = input.value.trim();
+  
+  if (!accounts[num]) accounts[num] = { urls: Array(TOTAL_URLS).fill(''), sent: 0 };
+  accounts[num].urls[idx] = val;
+  input.classList.toggle('filled', !!val);
+  
+  if (val) {
+    const duplicateInfo = findDuplicate(val, num, idx);
+    if (duplicateInfo) {
+      const profile = ACCOUNT_PROFILES[duplicateInfo.accountNum];
+      const profileName = profile ? `@${profile.username}` : `Cuenta ${duplicateInfo.accountNum}`;
+      showToast(`⚠️ URL ya registrada en el sistema: ${profileName} (DM #${duplicateInfo.index})`, 'error');
+    }
+  }
+  
+  scanCurrentInputsForDuplicates(num);
+  updateUrlCounter(num);
+}
+
+function updateUrlCounter(num) {
+  const acc = accounts[num] || { urls: [] };
+  const filled = acc.urls ? acc.urls.filter(u => u && u.trim()).length : 0;
+  document.getElementById('url-count').textContent = filled;
+  document.getElementById('btn-save').disabled = filled !== TOTAL_URLS;
+
+  // Real-time banner visibility based on duplicate presence
+  let hasAnyDuplicate = false;
+  if (acc.urls) {
+    for (let i = 0; i < acc.urls.length; i++) {
+      if (acc.urls[i] && findDuplicate(acc.urls[i], num, i)) {
+        hasAnyDuplicate = true;
+        break;
+      }
+    }
+  }
+
+  const warningBanner = document.getElementById('duplicate-warning-banner');
+  if (warningBanner) {
+    warningBanner.style.display = hasAnyDuplicate ? 'block' : 'none';
+  }
+}
+
+function saveAccount() {
+  const num = currentAccount;
+  if (!accounts[num]) return;
+
+  const filled = accounts[num].urls.filter(u => u && u.trim()).length;
+  if (filled !== TOTAL_URLS) {
+    showToast(`Faltan ${TOTAL_URLS - filled} URLs`, 'error');
+    return;
+  }
+
+  // Double check duplicates to show explicit list to the user
+  let duplicates = [];
+  accounts[num].urls.forEach((url, idx) => {
+    if (url) {
+      const dup = findDuplicate(url, num, idx);
+      if (dup) {
+        const profile = ACCOUNT_PROFILES[dup.accountNum];
+        const profileName = profile ? `@${profile.username}` : `Cuenta ${dup.accountNum}`;
+        duplicates.push(`· Fila ${idx+1}: Duplicado ya presente en ${profileName} (DM #${dup.index})`);
+      }
+    }
+  });
+
+  if (duplicates.length > 0) {
+    const message = `Se encontraron duplicados:\n${duplicates.slice(0, 3).join('\n')}${duplicates.length > 3 ? `\n... y ${duplicates.length - 3} más` : ''}\n\n¿Deseas guardar de todas formas?`;
+    if (!confirm(message)) {
+      return;
+    }
+  }
+
+  accounts[num].sent = 0;
+  saveData();
+  showToast('✓ Guardado correctamente', 'success');
+
+  setTimeout(() => {
+    openSequenceScreen(num);
+  }, 800);
+}
+
+// ── SEQUENCE ──
+function openSequenceScreen(num) {
+  const acc = accounts[num];
+  const profile = ACCOUNT_PROFILES[num];
+  currentAccount = num;
+  currentIndex = acc.sent || 0;
+
+  document.getElementById('seq-account-name').innerHTML = `Cuenta ${num} <span style="color: var(--accent); font-size: 14px; font-family: 'Space Mono', monospace; font-weight: normal; margin-left:8px; cursor: pointer; text-decoration: underline;" onclick="window.open('${profile.url}', '_blank')">(@${profile.username})</span>`;
+  document.getElementById('seq-badge-num').textContent = currentIndex;
+  document.getElementById('seq-start-sub').textContent = `${TOTAL_URLS - currentIndex} DMs pendientes de enviar.`;
+
+  // Show/hide states
+  if (currentIndex >= TOTAL_URLS) {
+    showSeqState('done');
+  } else {
+    showSeqState('start');
+  }
+
+  showScreen('screen-sequence');
+  seqStartTime = null;
+}
+
+function showSeqState(state) {
+  document.getElementById('seq-start-state').style.display = state === 'start' ? 'flex' : 'none';
+  document.getElementById('seq-active-state').style.display = state === 'active' ? 'flex' : 'none';
+  document.getElementById('seq-done-state').style.display = state === 'done' ? 'flex' : 'none';
+}
+
+function startSequence() {
+  seqStartTime = Date.now();
+  showSeqState('active');
+  loadDM(currentIndex);
+}
+
+function loadDM(idx) {
+  const acc = accounts[currentAccount];
+  const url = acc.urls[idx];
+
+  document.getElementById('dm-url-display').textContent = url;
+  document.getElementById('dm-progress-count').textContent = `${idx + 1} / ${TOTAL_URLS}`;
+  document.getElementById('dm-progress-fill').style.width = `${(idx / TOTAL_URLS) * 100}%`;
+  document.getElementById('seq-badge-num').textContent = idx;
+}
+
+function openCurrentDM() {
+  const url = accounts[currentAccount].urls[currentIndex];
+  if (url) window.open(url, '_blank');
+}
+
+function markDone() {
+  const url = accounts[currentAccount].urls[currentIndex];
+  // Registrar hora de envío - Log message sending time
+  // Cada contacto iniciado en el secuenciador es siempre el MSG 1 (Primer Contacto)
+  const logId = 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  logs.push({
+    id: logId,
+    accountNum: currentAccount,
+    dmNum: 1, // Siempre 1 para MSG 1
+    urlIndex: currentIndex + 1, // Posición individual de la URL (1 a 15) como referencia
+    url: url,
+    timestamp: Date.now()
+  });
+
+  currentIndex++;
+  accounts[currentAccount].sent = currentIndex;
+  saveData();
+  document.getElementById('seq-badge-num').textContent = currentIndex;
+
+  if (currentIndex >= TOTAL_URLS) {
+    // All done
+    const elapsed = seqStartTime ? Math.round((Date.now() - seqStartTime) / 60000) : TOTAL_URLS;
+    document.getElementById('done-time').textContent = `~${elapsed}m`;
+    document.getElementById('done-sub').textContent = `Los ${TOTAL_URLS} DMs de Cuenta ${currentAccount} fueron enviados.`;
+    showSeqState('done');
+    renderHome();
+    return;
+  }
+
+  // Show timer
+  startTimer(() => {
+    loadDM(currentIndex);
+  });
+}
+
+// ── FOLLOW-UPS PANELS ──
+function openFollowUpsScreen() {
+  renderFollowUps();
+  showScreen('screen-followups');
+}
+
+function createFollowupCard(log, typeKey) {
+  const item = document.createElement('div');
+  item.className = 'followups-item';
+  item.style.background = 'var(--surface)';
+  item.style.border = '1px solid var(--border)';
+  item.style.borderRadius = '10px';
+  item.style.padding = '16px';
+  item.style.display = 'flex';
+  item.style.flexDirection = 'column';
+  item.style.gap = '12px';
+
+  const d = new Date(log.timestamp);
+  const dateFormatted = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+  // Calcular tiempo transcurrido exacto para mostrarlo en tarjeta
+  const elapsedMs = Date.now() - log.timestamp;
+  const elapsedHours = Math.floor(elapsedMs / (1000 * 60 * 60));
+  const elapsedMinutes = Math.floor((elapsedMs % (1000 * 60 * 60)) / (1000 * 60));
+  const elapsedText = elapsedHours > 0 ? `Hace ${elapsedHours}h ${elapsedMinutes}m` : `Hace ${elapsedMinutes}m`;
+
+  const profile = ACCOUNT_PROFILES[log.accountNum] || { username: `cuenta${log.accountNum}`, url: '#' };
+
+  // Intentar mostrar qué número de URL original era si está guardada, o si no, omitir
+  const urlRefText = log.urlIndex ? ` (Fila #${log.urlIndex})` : '';
+
+  item.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="background: rgba(255, 59, 59, 0.2); border: 1px solid var(--accent); color: #fff; padding: 4px 10px; border-radius: 6px; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12px; letter-spacing: 1px; cursor: pointer;" onclick="window.open('${profile.url}', '_blank')">
+          🔴 CUENTA ${log.accountNum}
+        </span>
+        <a href="${profile.url}" target="_blank" style="color: var(--accent); text-decoration: underline; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: bold; cursor: pointer;">
+          @${profile.username}
+        </a>
+        <span style="font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted);">
+          DM #${log.dmNum}${urlRefText}
+        </span>
+      </div>
+      <div style="font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+        <span>Enviado: ${dateFormatted}</span>
+        <span style="color: var(--accent); font-weight: bold;">(${elapsedText})</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;">URL de contacto originaria:</div>
+      <div class="dm-url-display" style="margin: 0; padding: 10px 12px; font-size: 11px; background: rgba(0,0,0,0.3);" onclick="window.open('${log.url}', '_blank')">
+        🔗 ${log.url}
+      </div>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <span style="font-size: 11px; color: var(--muted);">
+        Usa la cuenta: <a href="${profile.url}" target="_blank" style="color: #4040ff; text-decoration: underline; font-weight: bold;">@${profile.username} ↗</a> para responder
+      </span>
+      <button class="btn-listo" onclick="markFollowupDone('${log.id}', '${typeKey}')" style="padding: 10px 16px; font-size: 12px; letter-spacing: 1px; border-radius: 6px; width: auto; font-weight: 700;">
+        ✓ Seguimiento enviado
+      </button>
+    </div>
+  `;
+  return item;
+}
+
+function renderFollowUps() {
+  const list4h = document.getElementById('list-4h');
+  const listD2 = document.getElementById('list-d2');
+  const listD4 = document.getElementById('list-d4');
+  const listD7 = document.getElementById('list-d7');
+
+  list4h.innerHTML = '';
+  listD2.innerHTML = '';
+  listD4.innerHTML = '';
+  listD7.innerHTML = '';
+
+  const now = Date.now();
+  let count4h = 0;
+  let countD2 = 0;
+  let countD4 = 0;
+  let countD7 = 0;
+
+  logs.forEach(log => {
+    const elapsedMs = now - log.timestamp;
+    const elapsedHours = elapsedMs / (1000 * 60 * 60);
+
+    if (log.dmNum === 1) {
+      // 4 hours (MSG 1)
+      if (elapsedHours >= 4 && elapsedHours < 48 && !followUpsCompleted[log.id + '_4h']) {
+        list4h.appendChild(createFollowupCard(log, '4h'));
+        count4h++;
+      }
+      // Day 2 (MSG 1)
+      if (elapsedHours >= 48 && !followUpsCompleted[log.id + '_d2']) {
+        listD2.appendChild(createFollowupCard(log, 'd2'));
+        countD2++;
+      }
+    } else if (log.dmNum === 2) {
+      // Day 4 (MSG 2)
+      if (elapsedHours >= 96 && !followUpsCompleted[log.id + '_d4']) {
+        listD4.appendChild(createFollowupCard(log, 'd4'));
+        countD4++;
+      }
+    } else if (log.dmNum === 3) {
+      // Day 7 (MSG 3)
+      if (elapsedHours >= 168 && !followUpsCompleted[log.id + '_d7']) {
+        listD7.appendChild(createFollowupCard(log, 'd7'));
+        countD7++;
+      }
+    }
+  });
+
+  // Update badges
+  document.getElementById('badge-4h').textContent = count4h;
+  document.getElementById('badge-d2').textContent = countD2;
+  document.getElementById('badge-d4').textContent = countD4;
+  document.getElementById('badge-d7').textContent = countD7;
+
+  // Placeholder
+  const placeholderHtml = `<div style="text-align: center; padding: 18px; font-size: 12px; color: var(--muted); border: 1px dashed var(--border); border-radius: 8px; font-family: 'Space Mono', monospace;">Sin seguimientos pendientes</div>`;
+  
+  if (count4h === 0) list4h.innerHTML = placeholderHtml;
+  if (countD2 === 0) listD2.innerHTML = placeholderHtml;
+  if (countD4 === 0) listD4.innerHTML = placeholderHtml;
+  if (countD7 === 0) listD7.innerHTML = placeholderHtml;
+
+  const total = count4h + countD2 + countD4 + countD7;
+  document.getElementById('followups-total-count').textContent = total;
+}
+
+function markFollowupDone(logId, typeKey) {
+  // Marcar como completado el seguimiento para impedir que vuelva a salir en el mismo tipo
+  followUpsCompleted[logId + '_' + typeKey] = true;
+
+  // Buscar el log original
+  const originalLog = logs.find(l => l.id === logId);
+  if (originalLog) {
+    if (typeKey === '4h' || typeKey === 'd2') {
+      // Si completamos Seguimiento de MSG 1 (4h o d2), significa que mandamos MSG 2 (dmNum = 2) a esta url.
+      // Registramos un nuevo log de enviado de tipo MSG 2 con hora actual para que gatille el seguimiento d4 dentro de 4 días.
+      const alreadyHasMsg2 = logs.some(l => l.url === originalLog.url && l.dmNum === 2);
+      if (!alreadyHasMsg2) {
+        const nextId = 'followup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        logs.push({
+          id: nextId,
+          accountNum: originalLog.accountNum,
+          dmNum: 2, // MSG 2
+          url: originalLog.url,
+          timestamp: Date.now()
+        });
+      }
+    } else if (typeKey === 'd4') {
+      // Si completamos Seguimiento de MSG 2 (d4), significa que mandamos MSG 3 (dmNum = 3) a esta url.
+      // Registramos un nuevo log para el seguimiento de d7 dentro de 7 días.
+      const alreadyHasMsg3 = logs.some(l => l.url === originalLog.url && l.dmNum === 3);
+      if (!alreadyHasMsg3) {
+        const nextId = 'followup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        logs.push({
+          id: nextId,
+          accountNum: originalLog.accountNum,
+          dmNum: 3, // MSG 3
+          url: originalLog.url,
+          timestamp: Date.now()
+        });
+      }
+    }
+  }
+
+  saveData();
+  showToast('✓ Seguimiento marcado como completado', 'success');
+  renderFollowUps();
+}
+
+function simulateLog(dmNum, offsetHours) {
+  const accountNum = Math.floor(Math.random() * 10) + 1;
+  const username = `lead_cuenta${accountNum}_dm${dmNum}`;
+  const mockUrl = `https://ig.me/m/${username}`;
+  
+  const logId = 'mock_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  const simulatedTime = Date.now() - (offsetHours * 60 * 60 * 1000);
+
+  logs.push({
+    id: logId,
+    accountNum: accountNum,
+    dmNum: dmNum,
+    url: mockUrl,
+    timestamp: simulatedTime
+  });
+
+  saveData();
+  showToast('✓ Log simulado inyectado correctamente', 'success');
+  renderFollowUps();
+}
+
+function clearLogsAndReset() {
+  logs = [];
+  followUpsCompleted = {};
+  saveData();
+  showToast('📋 Historial y estado de seguimientos limpiados', 'success');
+  renderFollowUps();
+}
+
+// ── TIMER ──
+function startTimer(onComplete) {
+  const overlay = document.getElementById('timer-overlay');
+  const ring = document.getElementById('timer-ring-fill');
+  const digits = document.getElementById('timer-digits');
+  const nextInfo = document.getElementById('timer-next-info');
+
+  const circumference = 502;
+  timerRemaining = TIMER_SECONDS;
+
+  nextInfo.textContent = `Siguiente: DM #${currentIndex + 1}`;
+
+  overlay.classList.add('visible');
+
+  function update() {
+    const mins = Math.floor(timerRemaining / 60);
+    const secs = timerRemaining % 60;
+    digits.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+
+    const progress = timerRemaining / TIMER_SECONDS;
+    ring.style.strokeDashoffset = circumference * (1 - progress);
+
+    // Color change as time runs out
+    if (timerRemaining <= 10) {
+      ring.style.stroke = '#ffcc00';
+    } else {
+      ring.style.stroke = 'var(--accent)';
+    }
+  }
+
+  update();
+
+  timerInterval = setInterval(() => {
+    timerRemaining--;
+    update();
+
+    if (timerRemaining <= 0) {
+      clearInterval(timerInterval);
+      overlay.classList.remove('visible');
+      onComplete();
+    }
+  }, 1000);
+}
+
+// ── NAVIGATION ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    document.getElementById('timer-overlay').classList.remove('visible');
+  }
+  renderHome();
+  showScreen('screen-home');
+}
+
+// ── KEYBOARD SHORTCUTS ──
+window.addEventListener('keydown', (e) => {
+  // Ignorar si el usuario está escribiendo en campos de entrada (como las URLs)
+  if (
+    document.activeElement && 
+    (document.activeElement.tagName === 'INPUT' || 
+     document.activeElement.tagName === 'TEXTAREA' || 
+     document.activeElement.isContentEditable)
+  ) {
+    return;
+  }
+
+  const key = e.key;
+
+  // Atajo para pantalla completa (tecla 'q' o 'Q')
+  if (key.toLowerCase() === 'q') {
+    e.preventDefault();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+        .then(() => {
+          showToast('⌨️ Atajo: Pantalla Completa Activada', 'success');
+        })
+        .catch(() => {
+          showToast('⚠️ No se pudo activar pantalla completa', 'error');
+        });
+    } else {
+      document.exitFullscreen();
+      showToast('⌨️ Atajo: Pantalla Completa Desactivada', 'success');
+    }
+    return;
+  }
+
+  // Atajo para Seguimientos (tecla 'r' o 'R')
+  if (key.toLowerCase() === 'r') {
+    e.preventDefault();
+    openFollowUpsScreen();
+    showToast('⌨️ Atajo: Panel de Seguimientos', 'success');
+    return;
+  }
+
+  // Atajos del 1 al 9 y 0 para las cuentas
+  if (key >= '1' && key <= '9') {
+    const accNum = parseInt(key);
+    e.preventDefault();
+    openAccount(accNum);
+    showToast(`⌨️ Atajo: Cuenta ${accNum}`, 'success');
+  } else if (key === '0') {
+    e.preventDefault();
+    openAccount(10);
+    showToast('⌨️ Atajo: Cuenta 10', 'success');
+  }
+});
+
+// ── TOAST ──
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── INIT ──
+loadData();
+renderHome();
+</script>
+
+<!-- ══ PWA INSTALL BANNER ══ -->
+<div id="pwa-banner" style="
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #111;
+  border-top: 1px solid #ff3b3b;
+  padding: 14px 20px;
+  z-index: 9999;
+  align-items: center;
+  gap: 14px;
+">
+  <img src="icons/icon-192.png" width="40" height="40" style="border-radius: 10px; flex-shrink: 0;" alt="icon">
+  <div style="flex: 1;">
+    <div style="font-weight: 800; font-size: 14px; font-family: 'Syne', sans-serif;">Instalar DM Sequencer</div>
+    <div style="font-size: 11px; color: #888; font-family: 'Space Mono', monospace;">Añade la app a tu pantalla de inicio</div>
+  </div>
+  <button id="pwa-install-btn" style="
+    background: #ff3b3b; border: none; color: #fff;
+    padding: 10px 18px; border-radius: 8px;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+    cursor: pointer; flex-shrink: 0;
+  ">Instalar</button>
+  <button onclick="document.getElementById('pwa-banner').style.display='none'" style="
+    background: none; border: 1px solid #333; color: #888;
+    width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+    font-size: 16px; flex-shrink: 0;
+  ">×</button>
+</div>
+
+<script>
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// Install prompt (Android / Desktop Chrome/Edge)
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('pwa-banner');
+  banner.style.display = 'flex';
+});
+
+document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('pwa-banner').style.display = 'none';
+  if (outcome === 'accepted') showToast('✓ App instalada correctamente', 'success');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-banner').style.display = 'none';
+  showToast('✓ DM Sequencer instalado', 'success');
+});
+</script>
+</body>
+</html>
