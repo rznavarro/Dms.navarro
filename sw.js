@@ -1,19 +1,19 @@
-const CACHE = 'dm-sequencer-v2';
+const CACHE = 'dm-sequencer-v3';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/sw.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable-192.png',
-  '/icons/icon-maskable-512.png',
-  'https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap'
+  '/icons/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(cache => {
+      return Promise.allSettled(ASSETS.map(url => cache.add(url)));
+    }).then(() => self.skipWaiting())
   );
 });
 
@@ -35,7 +35,7 @@ self.addEventListener('fetch', event => {
         const clone = response.clone();
         caches.open(CACHE).then(cache => cache.put(event.request, clone));
         return response;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(() => caches.match('/index.html'));
     })
   );
 });
